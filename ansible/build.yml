@@ -1,0 +1,12 @@
+---
+- hosts: build
+  remote_user: root
+  gather_facts: yes
+  vars_files:
+  - "./vars/softlayer.yml"
+  vars:
+    peer_count: "{{ peer_count }}"
+  roles:
+  - docker
+  - golang 
+  - build
