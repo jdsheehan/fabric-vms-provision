@@ -83,30 +83,21 @@ def scripts_invoke(dir_name, args):
     with open(filename, 'w') as ifile:
         ifile.write(INVOKE_INTRO)
         for i in range(0, args['org_count']):
-            ifile.write(INVOKE_CA_INTRO.format(org_id=i))
-            ifile.write(INVOKE_CA_YAML.format(org_id=i))
-            ifile.write(INVOKE_CA_FINISH)
-
-        for i in range(0, args['org_count']):
-            ifile.write(INVOKE_CLIENT_INTRO.format(org_id=i))
-            ifile.write(INVOKE_CLIENT)
-            ifile.write(INVOKE_CLIENT_ORDERERS)
-            ifile.write(INVOKE_CLIENT_ORDERER.format(org_id=i))
-            ifile.write(INVOKE_CLIENT_PEERS)
+            ifile.write(CONNECTION_PROFILE_INTRO.format(org_id=i))
+            ifile.write(CONNECTION_PROFILE_CA.format(org_id=i))
+            ifile.write(CONNECTION_PROFILE_CLIENT.format(org_id=i))
+            ifile.write(CONNECTION_PROFILE_ORDERERS.format(org_id=i))
+            ifile.write(CONNECTION_PROFILE_PEERS)
             for j in range(0, args['peer_count'][i]):
-                ifile.write(INVOKE_CLIENT_PEER.format(org_id=i, peer_id=j))
-            ifile.write(INVOKE_CLIENT_EVENTS)
-            ifile.write(INVOKE_CLIENT_EVENT.format(org_id=i))
-            ifile.write(INVOKE_CLIENT_FINISH)
-
-        count = 0
-        ifile.write(SAMPLE_INTRO)
-        ifile.write(SAMPLE)
-        for i in range(0, args['org_count']):
+                ifile.write(CONNECTION_PROFILE_PEERX.format(org_id=i, peer_id=j))
+            ifile.write(CONNECTION_PROFILE_ORGANIZATIONS.format(org_id=i))
             for j in range(0, args['peer_count'][i]):
-                ifile.write(SAMPLE_ROUTINE.format(org_id=i, peer_id=j, routine_id=count))
-                count = count + 1
-        ifile.write(SAMPLE_FINISH)
+                ifile.write(CONNECTION_PROFILE_ORGANIZATIONS_PEERS.format(org_id=i, peer_id=j))
+            ifile.write(CONNECTION_PROFILE_CHANNELS.format(org_id=i))
+            for j in range(0, args['peer_count'][i]):
+                ifile.write(CONNECTION_PROFILE_CHANNELS_PEERS.format(org_id=i, peer_id=j))
+            ifile.write(CONNECTION_PROFILE_ENTITY.format(org_id=i))
+            ifile.write(CONNECTION_PROFILE_FINISH)
 
     os.chmod(filename, 0o755)
 

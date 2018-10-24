@@ -3,7 +3,7 @@
   remote_user: root
   gather_facts: yes
   vars_files:
-  - "./vars/softlayer.yml"
+  - "{{ lookup('env','VARS_FILE') }}"
   vars:
     peer_count: "{{ peer_count }}"
   roles:

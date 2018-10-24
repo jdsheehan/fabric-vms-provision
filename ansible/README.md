@@ -58,15 +58,15 @@ export SLPASS='REPLACE ME'
 
 eval `ssh-agent`
 
-./provision.sh <number of peers in org0> <number of peers in org1> ... <number of peers in org N>
+./provision-softlayer.sh <number of peers in org0> <number of peers in org1> ... <number of peers in org N>
 # for example to create to create 3 orgs, org0 with 2 peers, org1 with 1 peer, and org2 with 3 peers
-# ./provision.sh 2 1 3
+# ./provision-softlayer.sh 2 1 3
 
 # list vms
 slcli vs list --columns id,hostname,primary_ip,backend_ip,datacenter,action,power_state
 
 # there is also a utility to list ssh connection details for each vm
-python3 utils/env_hosts.py
+python3 utils/softlayer/env_hosts.py
 ```
 
 ### Notes
@@ -80,7 +80,7 @@ to the vagrant vm `/home/vagrant/.bashrc`
 
 **This creates a lot of vms**
 
-For example, with `./provision.sh 2 1 3`, each org has a seperate vm for zookeeper, kafka, fabric-ca, orderer, cli, and a seperate vm for each peer. In the example `./provision.sh 2 1 3` this equates to **21 vms** _[1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 2(peer)] + [1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 1(peer)] + [1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 3(peer)]_
+For example, with `./provision-softlayer.sh 2 1 3`, each org has a seperate vm for zookeeper, kafka, fabric-ca, orderer, cli, and a seperate vm for each peer. In the example `./provision-softlayer.sh 2 1 3` this equates to **21 vms** _[1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 2(peer)] + [1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 1(peer)] + [1(zk) + 1(kafka) + 1(fca) + 1(orderer) + 1(cli) + 3(peer)]_
 
 |           |  org0 |  org1 |  org2 |  total |
 | :-------- | ----: | ----: | ----: | -----: |
@@ -139,9 +139,57 @@ cd pkg-cli2
 
 Now that the channel is created and chaincode instantiated, the `./invoke` and `./query` scripts can be used to append data to the ledger.
 
+
+## use a client to invoke/query transactions
+
+On the `CLI0` terminal/vm
+```
+cd ~/pkg-invoke/fabric-sdk-go
+
+# first contact fabric-ca0 and create a user
+./caRegisterAndEnrol  --help
+./caRegisterAndEnrol  --config connection-profile-org0.yaml   --pass p0  --user u0
+
+# use this new user to invoke (this will send a key/value [uuid/timestamp] for duration seconds)
+./invoke  --help
+./invoke  --config connection-profile-org0.yaml   --duration 20  --org org0  --peer peer1.org0.example.com  --user u0
+
+# use this new user to query a transaction
+./query  --help
+./query  --config connection-profile-org0.yaml  --org org0  --peer peer0.org0.example.com  --user u0  --key <INSERT VALID KEY>
+```
+
+Likewise, on the `CLI1` terminal/vm
+```
+cd ~/pkg-invoke/fabric-sdk-go
+
+# first contact fabric-ca1 and create a user
+./caRegisterAndEnrol  --config connection-profile-org1.yaml   --pass p1  --user u1
+
+# use this new user to invoke (this will send a key/value [uuid/timestamp] for duration seconds)
+./invoke  --config connection-profile-org1.yaml   --duration 20  --org org1  --peer peer1.org1.example.com  --user u1
+
+# use this new user to query a transaction
+./query  --config connection-profile-org1.yaml  --org org1  --peer peer0.org1.example.com  --user u1  --key <INSERT VALID KEY>
+```
+
+Likewise, on the `CLI2` terminal/vm, ensuring to use the correct `connection-profileX.yaml`, `orgX`, and `peerY.orgX.example.com`
+```
+cd ~/pkg-invoke/fabric-sdk-go
+
+# first contact fabric-ca2 and create a user
+./caRegisterAndEnrol  --config connection-profile-org2.yaml   --pass p2  --user u2
+
+# use this new user to invoke (this will send a key/value [uuid/timestamp] for duration seconds)
+./invoke  --config connection-profile-org2.yaml   --duration 20  --org org2  --peer peer1.org2.example.com  --user u2
+
+# use this new user to query a transaction
+./query  --config connection-profile-org2.yaml  --org org2  --peer peer0.org2.example.com  --user u2  --key <INSERT VALID KEY>
+```
+
+
 ### Notes
-- connecting to the `peerXorgY` vm and running `docker logs -f <chaincode-container>` will show chaincode being executed.
-- there is also a sample program on each cli, in `~/pkg-invoke` which uses the unofficial `gohfc` library to perform invokes
+- connecting to the `peerYorgX` vm and running `docker logs -f <chaincode-container>` will show chaincode being executed.
 - on the build vm `~/build/fabric/orgX` shows the files required for an org
 
 
@@ -151,5 +199,5 @@ Open a terminal
 ```
 vargrant ssh
 cd /vagrant/ansible
-ansible-playbook --key-file "~/.ssh/fabric"  cancel.yml
+VARS_FILE=./vars/softlayer.yml ansible-playbook --key-file "~/.ssh/fabric"  cancel.yml
 ```

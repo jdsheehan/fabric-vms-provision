@@ -5,18 +5,20 @@ Prerequisites: add the following to `/etc/hosts`
 ```
 127.0.0.1  orderer.example.com
 127.0.0.1  peer0.org0.example.com
+127.0.0.1  ca.org0.example.com
 ```
 
 
 ---
 
 
-`./single.sh` will,
+`./single-ca.sh` will,
 - build peer/orderer binaries
 - create required artifacts (config files, msp certs, tls certs) for running peer and orderer (`~/fabric/artifacts`)
 - create scripts to run both peer and orderer (`~/fabric/pkg-orderer` and `~/fabric/pkg-peer0org0`)
 - create scripts to create, join, update, install, and instantiate a chaincode (`fabric/examples/chaincode/go/example02`) (`~/fabric/pkg-cli`)
 - create scripts to query and invoke chaincode (`~/fabric/pkg-cli`)
+- create programs which leverage `fabric-sdk-go` to create users and invoke transactions
 
 
 ---
@@ -32,11 +34,19 @@ This will create a vm with various dependencies (`docker`, `git`, `golang`, `lib
 
 ## Build and create artifacts
 ```
-cd /vagrant/single
-./single.sh
+cd /vagrant/single-ca
+./single-ca.sh
 ```
 
 When this completes, it will create `~/fabric`
+
+### Start the fabric-ca
+```
+# open a new terminal
+vagrant ssh
+cd ~/fabric/pkg-fabric-ca
+./run
+```
 
 ### Start the orderer
 ```
@@ -80,15 +90,24 @@ cd ~/fabric/pkg-cli
 ./query b
 ```
 
+
 ### use client based on fabric-sdk-go
-code is in `./client` directory
+code is in `/vagrant/single-ca/fabric-sdk-go` directory. There are two files in here. The first `caRegisterAndEnrol.go` will connect to the `fabric-ca` and create a new user. The second `invokeOrQuery.go` will use the user created by the first program to either query or invoke a transaction.
+
+
 ```
+# connect to fabric-ca and create a new user
 cd ~/fabric/pkg-cli
-./client  --config connection-profile.yaml  --action invoke  --key a
-./client  --config connection-profile.yaml  --action query  --key b
+./caRegisterAndEnrol  --config connection-profile.yaml  --pass password  --user username
 ```
 
-`./client ...` can query the ledger, or transfer `5` from `a` to `b`.
+```
+# use user to query or invoke transaction
+./invokeOrQuery  --config connection-profile.yaml  --action invoke  --key a  --user username
+# or
+./invokeOrQuery  --config connection-profile.yaml  --action query  --key a  --user username
+```
+
 
 ### watch chaincode logs
 ```

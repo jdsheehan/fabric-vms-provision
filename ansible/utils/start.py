@@ -64,14 +64,14 @@ def script_start(peer_count):
     os.chmod(filename, 0o755)
 
 
-def script_template(host, service, filename):
+def script_template(host, service, vars_file, filename):
 
     template = '''---
 - hosts: {host}
   remote_user: root
   gather_facts: yes
   vars_files:
-  - "./vars/softlayer.yml"
+  - "{vars_file}"
   vars:
     service_name: "{service}"
   roles:
@@ -79,21 +79,21 @@ def script_template(host, service, filename):
     '''
 
     with open(filename, 'w') as ffile:
-        ffile.write(template.format(host=host, service=service))
+        ffile.write(template.format(host=host, service=service, vars_file=vars_file))
 
 
-def script_yml(peer_count):
+def script_yml(peer_count, vars_file):
 
     org_count = len(peer_count)
     for org in range(0, org_count):
-        script_template('z{}'.format(org), 'zookeeper.service', 'autogen_start_zookeeper{}.yml'.format(org))
-        script_template('k{}'.format(org), 'kafka.service', 'autogen_start_kafka{}.yml'.format(org))
-        script_template('fabric-ca{}'.format(org), 'fabricca.service', 'autogen_start_fabricca{}.yml'.format(org))
-        script_template('orderer{}'.format(org), 'orderer.service', 'autogen_start_orderer{}.yml'.format(org))
+        script_template('z{}'.format(org), 'zookeeper.service', vars_file, 'autogen_start_zookeeper{}.yml'.format(org))
+        script_template('k{}'.format(org), 'kafka.service', vars_file, 'autogen_start_kafka{}.yml'.format(org))
+        script_template('fabric-ca{}'.format(org), 'fabricca.service', vars_file, 'autogen_start_fabricca{}.yml'.format(org))
+        script_template('orderer{}'.format(org), 'orderer.service', vars_file, 'autogen_start_orderer{}.yml'.format(org))
 
-        script_template('orderer{}'.format(org), 'orderer.service', 'autogen_start_orderer{}.yml'.format(org))
+        script_template('orderer{}'.format(org), 'orderer.service', vars_file, 'autogen_start_orderer{}.yml'.format(org))
         for peer in range(0, peer_count[org]):
-            script_template('peer{}.org{}'.format(peer, org), 'peer.service', 'autogen_start_peer{}org{}.yml'.format(peer, org))
+            script_template('peer{}.org{}'.format(peer, org), 'peer.service', vars_file, 'autogen_start_peer{}org{}.yml'.format(peer, org))
 
 
 def main():
@@ -103,9 +103,10 @@ def main():
                         nargs='+',
                         type=int,
                         help='number of peers per org')
+    parser.add_argument('-v', '--vars_file', help='ansible vars_file location')
     args = parser.parse_args()
 
-    script_yml(args.peer_count)
+    script_yml(args.peer_count, args.vars_file)
     script_start(args.peer_count)
 
 

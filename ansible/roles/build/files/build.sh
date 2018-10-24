@@ -23,7 +23,19 @@ make native
 
 cd
 
-cd ${GOPATH}/src/localhost/invoke
+cd ${GOPATH}/src/localhost/fabric-sdk-go/caRegisterAndEnrol
+go get
+go build
+
+cd
+
+cd ${GOPATH}/src/localhost/fabric-sdk-go/invoke
+go get
+go build
+
+cd
+
+cd ${GOPATH}/src/localhost/fabric-sdk-go/query
 go get
 go build
 

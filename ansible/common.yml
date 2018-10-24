@@ -2,6 +2,6 @@
 - hosts: all
   gather_facts: no
   vars_files:
-  - "./vars/softlayer.yml"
+  - "{{ lookup('env','VARS_FILE') }}"
   roles:
   - common
